@@ -1562,9 +1562,21 @@ async function generateDeepStudy() {
   show('screen-loading2');
   const loadingInterval = animateLoadingSteps(['ls21','ls22','ls23','ls24','ls25']);
 
-  const systemPrompt = `Você é um analista estratégico sênior da Taut, especializado em estudos de viabilidade de nicho jurídico. Sua tarefa é produzir um estudo completo, aprofundado e estratégico sobre o nicho selecionado pelo advogado.
+  const systemPrompt = `Você é um analista estratégico sênior da Taut — consultoria especializada em construção de autoridade de longo prazo para advogados. Sua missão é produzir um estudo de viabilidade de nicho que seja radicalmente diferente do que o mercado oferece: não genérico, não cheio de promessas, não inventado.
 
-O estudo deve ser denso, específico e acionável — não genérico. Use dados concretos, estimativas fundamentadas, e conecte sempre ao perfil real do advogado. Pense em termos de um consultor sênior que passou horas pesquisando aquele mercado.
+━━━ QUATRO REGRAS INVIOLÁVEIS ━━━
+
+1. NUNCA INVENTE DADOS.
+Jamais fabrique estatísticas com números precisos e URLs que não existem. Se você não tem certeza de um dado, use estimativas com metodologia transparente: "Partindo de X (fonte conhecida pelo nome), estimamos que Y porque Z." Preferível ser honestamente estimado do que falsamente preciso. Fontes aceitáveis pelo nome: OAB, CNJ, IBGE, ABStartups, LAVCA, Banco Central, CVM, ANPD, Distrito, Endeavor. Nunca invente um dado atribuído a essas fontes.
+
+2. PERSONALIZE OU NÃO ESCREVA.
+Cada seção deve conter referências explícitas ao perfil real deste advogado — casos que ele descreveu, opiniões que expressou, clientes que atendeu. Se uma frase poderia estar em um estudo para qualquer advogado, reescreva até que só faça sentido para este. O leitor deve sentir que o documento foi escrito para ele — porque foi.
+
+3. LONGEVIDADE É A VIGA CENTRAL.
+A filosofia da Taut é construção de carreira de longo prazo. O estudo deve argumentar explicitamente por que este nicho sustenta (ou não) uma trajetória de 10-20 anos. Inclua os fatores estruturais que protegem o nicho do tempo: regulação crescente, digitalização irreversível, tendências demográficas, dependência do cliente.
+
+4. RECOMENDAÇÕES SÓ VALEM SE FOREM INCOPIÁVEIS.
+Cada recomendação final deve ser executável apenas por este advogado específico, dado o que ele revelou sobre si mesmo. "Criar conteúdo no LinkedIn" não é uma recomendação — é um conselho genérico. "Documentar o caso da pirataria derrubada em 4 horas como caso de estudo técnico para fundadores de SaaS" é uma recomendação.
 
 ━━━ FORMATO ━━━
 
@@ -1573,60 +1585,84 @@ Responda EXCLUSIVAMENTE em JSON válido:
 {
   "titulo": "Estudo de Viabilidade: [nome completo do nicho]",
   "data": "Março de 2026",
+
   "introducao": {
-    "descricao": "3 parágrafos introduzindo o nicho, seu contexto e por que ele é estratégico no mercado jurídico atual.",
-    "porque_estrategico": "1 parágrafo específico sobre por que esse nicho é especialmente relevante agora — mudanças regulatórias, tendências de mercado, demanda reprimida."
+    "descricao": "3 parágrafos introduzindo o nicho, seu contexto e por que ele é estratégico. Já nesta seção, faça uma referência concreta à trajetória deste advogado.",
+    "porque_estrategico": "1 parágrafo sobre por que este nicho é relevante agora — mudanças regulatórias reais, tendências verificáveis, demanda reprimida."
   },
-  "viabilidade": {
-    "visao_geral": "2 parágrafos sobre a viabilidade geral do nicho.",
-    "tam_estimativa": "Estimativa detalhada do mercado endereçável no Brasil com lógica de cálculo.",
-    "tendencias": [
-      {"titulo": "Nome da tendência", "descricao": "Explicação da tendência e impacto no nicho"}
-    ],
-    "dores_principais": [
-      {"dor": "Nome da dor", "detalhe": "Explicação do problema e por que gera demanda jurídica"}
+
+  "vantagem_pessoal": {
+    "conexao_trajetoria": "2 parágrafos conectando explicitamente a trajetória, os casos descritos e as opiniões expressas por este advogado a este nicho. Cite situações específicas das respostas dele. Este parágrafo deve ser impossível de aproveitar por outro advogado.",
+    "diferenciais": [
+      {
+        "diferencial": "Nome curto do diferencial",
+        "evidencia": "Qual parte específica da trajetória ou resposta dele prova que tem isso",
+        "impacto": "Como esse diferencial se traduz em vantagem competitiva neste nicho"
+      }
     ]
   },
+
+  "perspectiva_carreira": {
+    "horizonte": "Alta (10+ anos) / Média (5-7 anos) / Baixa (2-3 anos)",
+    "analise": "2 parágrafos sobre por que este nicho tem (ou não tem) longevidade estrutural — fatores que o tornam crescente ou declinante no horizonte de uma carreira. Seja honesto sobre riscos.",
+    "fatores_protecao": ["Fator estrutural 1 que garante longevidade", "Fator 2", "Fator 3"],
+    "riscos_longevidade": ["Risco real 1", "Risco real 2"]
+  },
+
+  "viabilidade": {
+    "visao_geral": "2 parágrafos sobre viabilidade geral. Inclua referência ao perfil do advogado.",
+    "tam_metodologia": "Estimativa de mercado construída com lógica transparente. Formato obrigatório: comece pelo número conhecido (ex: total de empresas de tech no Brasil segundo IBGE/ABStartups), aplique filtros com justificativa, chegue ao mercado endereçável. Nunca cite porcentagens precisas sem base declarada.",
+    "tendencias": [
+      {"titulo": "Nome da tendência", "descricao": "Tendência real e verificável com impacto no nicho"}
+    ],
+    "dores_principais": [
+      {"dor": "Nome da dor", "detalhe": "Problema concreto que gera demanda jurídica — específico para este nicho"}
+    ]
+  },
+
   "publico_alvo": [
     {
       "segmento": "Nome do segmento",
       "descricao": "Quem são, o que fazem, em que fase estão",
-      "dores_especificas": ["dor 1", "dor 2", "dor 3"],
-      "momento_compra": "Quando e por que buscam esse advogado especificamente",
+      "dores_especificas": ["dor específica 1", "dor 2", "dor 3"],
+      "momento_compra": "Gatilho concreto que os faz buscar esse advogado — situação específica, não genérica",
       "capacidade_financeira": "Alta / Média / Baixa"
     }
   ],
+
   "produtos": [
     {
-      "nome": "Nome do serviço/produto jurídico",
-      "descricao": "O que inclui, como funciona, qual problema resolve",
+      "nome": "Nome do serviço jurídico",
+      "descricao": "O que inclui, como funciona, qual problema específico resolve",
       "formato": "Assessoria contínua / Por projeto / Consultoria / Contencioso / Outro",
       "ticket_estimado": "R$ X.000 – R$ Y.000"
     }
   ],
+
   "canais": [
     {
       "canal": "Nome do canal",
-      "acoes": "O que fazer especificamente nesse canal para atrair esse perfil de cliente",
+      "acoes": "Ação concreta e específica para este advogado neste canal — não genérica",
       "potencial_autoridade": "Alto / Médio / Baixo",
       "adequacao_high_ticket": "Alta / Média / Baixa"
     }
   ],
+
   "conclusao": {
-    "parecer_geral": "2 parágrafos com a conclusão estratégica — viabilidade, janela de oportunidade, perspectivas.",
+    "parecer_geral": "2 parágrafos com conclusão estratégica honesta — viabilidade real, janela de oportunidade, perspectiva de longo prazo. Conecte ao perfil do advogado.",
     "recomendacoes": [
-      "Recomendação 1 — específica e acionável",
-      "Recomendação 2",
-      "Recomendação 3",
-      "Recomendação 4"
+      {
+        "titulo": "Título curto da recomendação",
+        "acao": "O que fazer especificamente — concreto, não genérico",
+        "por_que_voce": "Por que ESTE advogado tem vantagem única nessa ação. Cite algo concreto da trajetória dele."
+      }
     ]
   },
-  "referencias": [
-    {"numero": 1, "texto": "AUTOR/ÓRGÃO. Título. Disponível em: URL. Acesso em: 2026.", "url": "https://..."}
-  ]
+
+  "fontes_metodologia": "Parágrafo explicando as principais fontes de referência e a metodologia usada nas estimativas deste estudo. Cite apenas fontes reais pelo nome (OAB, CNJ, ABStartups, IBGE, etc.) — nunca invente URLs ou dados atribuídos a essas fontes. Seja transparente sobre o que é estimado versus o que é dado verificado."
 }
 
-Use 3-4 segmentos de público-alvo, 4-5 produtos, 5-6 canais e 5-8 referências reais e verificáveis.`;
+Use 3-4 segmentos de público-alvo, 4-5 produtos, 5-6 canais e 4-5 recomendações. Priorize profundidade e personalização sobre volume.`;
 
   const userMessage = `Gere o estudo completo de viabilidade.
 
@@ -1659,7 +1695,7 @@ Abrangência: ${answers.scope}`;
       },
       body: JSON.stringify({
         model: 'claude-opus-4-5-20251101',
-        max_tokens: 8000,
+        max_tokens: 16000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }]
       })
@@ -1751,22 +1787,61 @@ function renderStudy(s) {
     doresHTML += `<li><strong>${d.dor}:</strong> ${d.detalhe}</li>`;
   });
 
-  // Recomendações
+  // Recomendações (novo formato — objetos com titulo, acao, por_que_voce)
   let recsHTML = '';
   (s.conclusao?.recomendacoes || []).forEach((r, i) => {
+    const titulo = typeof r === 'string' ? `Recomendação ${i+1}` : (r.titulo || `Recomendação ${i+1}`);
+    const acao = typeof r === 'string' ? r : (r.acao || '');
+    const porQueVoce = typeof r === 'object' ? (r.por_que_voce || '') : '';
     recsHTML += `
     <div class="study-rec">
       <div class="rec-num">${i + 1}</div>
-      <p>${r}</p>
+      <div>
+        <strong style="display:block; font-size:14px; color:#131110; margin-bottom:4px;">${titulo}</strong>
+        <p style="margin-bottom:${porQueVoce ? '8px' : '0'}">${acao}</p>
+        ${porQueVoce ? `<p style="font-size:13px; color:#B85C35; font-style:italic; margin:0;">↳ Por que você: ${porQueVoce}</p>` : ''}
+      </div>
     </div>`;
   });
 
-  // Referências
-  let refsHTML = '';
-  (s.referencias || []).forEach(r => {
-    const linkText = r.url ? `<a href="${r.url}" target="_blank">${r.url}</a>` : '';
-    refsHTML += `<li>${r.numero}. ${r.texto} ${linkText}</li>`;
-  });
+  // Vantagem pessoal
+  let vantagemHTML = '';
+  if (s.vantagem_pessoal) {
+    const v = s.vantagem_pessoal;
+    const diferenciaisHTML = (v.diferenciais || []).map(d => `
+      <div class="study-segment-card">
+        <h4>${d.diferencial}</h4>
+        <p><strong>Evidência:</strong> ${d.evidencia}</p>
+        <p style="margin:0;"><strong>Impacto:</strong> ${d.impacto}</p>
+      </div>`).join('');
+    vantagemHTML = `
+      <p>${v.conexao_trajetoria?.replace(/\n/g, '</p><p>') || ''}</p>
+      ${diferenciaisHTML}`;
+  }
+
+  // Perspectiva de carreira
+  let carreiraHTML = '';
+  if (s.perspectiva_carreira) {
+    const c = s.perspectiva_carreira;
+    const horizClass = c.horizonte?.toLowerCase().startsWith('alta') ? 'longevidade-alta'
+      : c.horizonte?.toLowerCase().startsWith('média') ? 'longevidade-media'
+      : 'longevidade-baixa';
+    const horizIcon = horizClass === 'longevidade-alta' ? '↑' : horizClass === 'longevidade-media' ? '→' : '↓';
+    const protHTML = (c.fatores_protecao || []).map(f => `<li>${f}</li>`).join('');
+    const riscosHTML = (c.riscos_longevidade || []).map(r => `<li>${r}</li>`).join('');
+    carreiraHTML = `
+      <div style="margin-bottom:16px;">
+        <span class="longevidade-badge ${horizClass}" style="font-size:13px; padding:5px 12px;">${horizIcon} Longevidade: ${c.horizonte || ''}</span>
+      </div>
+      <p>${c.analise?.replace(/\n/g, '</p><p>') || ''}</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
+        ${protHTML ? `<div><h3 style="font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.10em;color:#131110;margin-bottom:8px;">Fatores de Proteção</h3><ul class="study-bullets">${protHTML}</ul></div>` : ''}
+        ${riscosHTML ? `<div><h3 style="font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.10em;color:#B85C35;margin-bottom:8px;">Riscos a Monitorar</h3><ul class="study-bullets" style="--bullet-color:#B85C35">${riscosHTML}</ul></div>` : ''}
+      </div>`;
+  }
+
+  // Fontes e metodologia (substituiu referências)
+  const fontesHTML = s.fontes_metodologia || '';
 
   doc.innerHTML = `
     <div class="study-cover">
@@ -1794,13 +1869,27 @@ function renderStudy(s) {
         </div>` : ''}
       </div>
 
+      ${vantagemHTML ? `
       <div class="study-section">
         <div class="study-section-num">Seção 2</div>
+        <h2>Por que você tem vantagem aqui</h2>
+        ${vantagemHTML}
+      </div>` : ''}
+
+      ${carreiraHTML ? `
+      <div class="study-section">
+        <div class="study-section-num">Seção 3</div>
+        <h2>Perspectiva de Carreira de Longo Prazo</h2>
+        ${carreiraHTML}
+      </div>` : ''}
+
+      <div class="study-section">
+        <div class="study-section-num">Seção 4</div>
         <h2>Viabilidade do Nicho</h2>
         <p>${s.viabilidade?.visao_geral?.replace(/\n/g, '</p><p>') || ''}</p>
         <div class="study-subsection" style="margin-top:16px;">
-          <h3>Tamanho de Mercado (TAM)</h3>
-          <p>${s.viabilidade?.tam_estimativa || ''}</p>
+          <h3>Estimativa de Mercado — Metodologia</h3>
+          <p>${s.viabilidade?.tam_metodologia || s.viabilidade?.tam_estimativa || ''}</p>
         </div>
         ${tendHTML ? `
         <div class="study-subsection" style="margin-top:16px;">
@@ -1815,20 +1904,20 @@ function renderStudy(s) {
       </div>
 
       <div class="study-section">
-        <div class="study-section-num">Seção 3</div>
+        <div class="study-section-num">Seção 5</div>
         <h2>Público-Alvo Ideal</h2>
         ${publicoHTML}
       </div>
 
       <div class="study-section">
-        <div class="study-section-num">Seção 4</div>
+        <div class="study-section-num">Seção 6</div>
         <h2>Produtos Jurídicos Estratégicos</h2>
         ${prodHTML}
       </div>
 
       <div class="study-section">
-        <div class="study-section-num">Seção 5</div>
-        <h2>Canais de Aquisição e Parcerias</h2>
+        <div class="study-section-num">Seção 7</div>
+        <h2>Canais de Aquisição</h2>
         <table class="study-table">
           <thead>
             <tr>
@@ -1843,7 +1932,7 @@ function renderStudy(s) {
       </div>
 
       <div class="study-section">
-        <div class="study-section-num">Seção 6</div>
+        <div class="study-section-num">Seção 8</div>
         <h2>Conclusão e Recomendações</h2>
         <p>${s.conclusao?.parecer_geral?.replace(/\n/g, '</p><p>') || ''}</p>
         ${recsHTML ? `
@@ -1852,10 +1941,10 @@ function renderStudy(s) {
         </div>` : ''}
       </div>
 
-      ${refsHTML ? `
+      ${fontesHTML ? `
       <div class="study-refs">
-        <h2>Referências</h2>
-        <ul>${refsHTML}</ul>
+        <h2>Fontes e Metodologia</h2>
+        <p style="font-size:13px; color:#555; line-height:1.7;">${fontesHTML}</p>
       </div>` : ''}
 
     </div>
