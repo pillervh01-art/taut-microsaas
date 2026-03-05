@@ -1386,7 +1386,6 @@ Responda EXCLUSIVAMENTE em JSON válido, sem texto fora do JSON:
       "publico_alvo": "Descrição específica: segmento, porte/perfil, momento de vida, problema que os faz buscar esse advogado",
       "ticket_potencial": "Baixo / Médio / Alto / Muito alto",
       "dificuldade_posicionamento": "Baixa / Média / Alta",
-      "prazo_resultado": "X a Y meses",
       "longevidade": "Alta (10+ anos) / Média (5-7 anos) / Baixa (2-3 anos)",
       "tendencia_mercado": "Ascendente / Estável / Maturando / Em declínio",
       "longevidade_justificativa": "1 frase explicando por que esse nicho tem essa longevidade — seja honesto sobre riscos de mercado."
@@ -1510,7 +1509,6 @@ function renderPreviews(data) {
       <div class="npc-chips">
         <div class="npc-chip">Público: <span>${n.publico_alvo.substring(0, 50)}${n.publico_alvo.length > 50 ? '…' : ''}</span></div>
         <div class="npc-chip">Ticket: <span>${n.ticket_potencial}</span></div>
-        <div class="npc-chip">Resultado: <span>${n.prazo_resultado}</span></div>
       </div>
       <div style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 2px;">
         <div class="longevidade-row">
