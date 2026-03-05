@@ -404,6 +404,43 @@
       font-size: 12px; color: var(--muted);
     }
     .npc-chip span { color: var(--text); font-weight: 600; }
+
+    .longevidade-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 700; padding: 3px 9px;
+      border-radius: 20px; letter-spacing: 0.04em;
+    }
+    .longevidade-alta {
+      background: rgba(76,175,125,0.12);
+      border: 1px solid rgba(76,175,125,0.3);
+      color: #4caf7d;
+    }
+    .longevidade-media {
+      background: rgba(255,193,70,0.12);
+      border: 1px solid rgba(255,193,70,0.3);
+      color: #ffc146;
+    }
+    .longevidade-baixa {
+      background: rgba(248,113,113,0.12);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: #f87171;
+    }
+    .tendencia-tag {
+      font-size: 11px; font-weight: 600; padding: 3px 8px;
+      border-radius: 20px; letter-spacing: 0.04em;
+      background: rgba(244,241,235,0.06);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .longevidade-row {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .longevidade-note {
+      font-size: 12px; color: var(--text-muted); line-height: 1.5;
+      font-style: italic; margin-top: 4px;
+    }
+
     .btn-choose {
       background: transparent;
       border: 1px solid var(--accent);
@@ -1325,6 +1362,14 @@ Um nicho forte tem um ângulo — uma perspectiva que outros não defendem publi
 
 6. O QUE O ADVOGADO NÃO QUER É TÃO IMPORTANTE QUANTO O QUE ELE QUER
 
+7. LONGEVIDADE É CRITÉRIO DE RANQUEAMENTO — NÃO É OPCIONAL
+A metodologia da Taut é de construção de autoridade no longo prazo. Um nicho que gera resultado em 6 meses mas desaparece em 3 anos é uma armadilha, não uma oportunidade. Avalie cada nicho pela sua capacidade de sustentar uma carreira de 10+ anos.
+
+Contexto obrigatório de mercado:
+- O mercado de infoprodutos e lançamentos digitais no Brasil está em ciclo de maturação com queda expressiva de CPL e aumento de ceticismo do consumidor desde 2023. Nichos centrados exclusivamente nesse ecossistema têm longevidade média-baixa.
+- Mercados B2B, tech, saúde, expansão internacional e regulação emergente (IA, dados, crypto) estão em crescimento estrutural com horizonte de 10-15 anos.
+- Ao avaliar longevidade, considere: regulação crescente, digitalização do setor, expansão internacional do cliente, e se o problema do cliente existirá daqui a 10 anos.
+
 ━━━ FORMATO DA RESPOSTA ━━━
 
 Responda EXCLUSIVAMENTE em JSON válido, sem texto fora do JSON:
@@ -1341,7 +1386,10 @@ Responda EXCLUSIVAMENTE em JSON válido, sem texto fora do JSON:
       "publico_alvo": "Descrição específica: segmento, porte/perfil, momento de vida, problema que os faz buscar esse advogado",
       "ticket_potencial": "Baixo / Médio / Alto / Muito alto",
       "dificuldade_posicionamento": "Baixa / Média / Alta",
-      "prazo_resultado": "X a Y meses"
+      "prazo_resultado": "X a Y meses",
+      "longevidade": "Alta (10+ anos) / Média (5-7 anos) / Baixa (2-3 anos)",
+      "tendencia_mercado": "Ascendente / Estável / Maturando / Em declínio",
+      "longevidade_justificativa": "1 frase explicando por que esse nicho tem essa longevidade — seja honesto sobre riscos de mercado."
     }
   ],
   "proximo_passo": [
@@ -1351,7 +1399,7 @@ Responda EXCLUSIVAMENTE em JSON válido, sem texto fora do JSON:
   ]
 }
 
-Ordene pelo maior fit com o perfil real. Seja direto e honesto — inclusive sobre riscos.`;
+Ordene pelo MELHOR EQUILÍBRIO entre fit com o perfil real E longevidade do nicho. Um nicho com fit alto mas longevidade baixa não deve ser o #1. Seja direto e honesto — inclusive sobre riscos de mercado e ciclos de declínio.`;
 
   const userMessage = `Analise o perfil e gere os 3 nichos ideais.
 
@@ -1431,6 +1479,20 @@ function renderPreviews(data) {
     const card = document.createElement('div');
     card.className = 'niche-preview-card' + (i === 0 ? ' top-pick' : '');
 
+    // Longevidade badge class
+    const longClass = n.longevidade
+      ? (n.longevidade.toLowerCase().startsWith('alta') ? 'longevidade-alta'
+        : n.longevidade.toLowerCase().startsWith('média') ? 'longevidade-media'
+        : 'longevidade-baixa')
+      : 'longevidade-media';
+
+    const longIcon = longClass === 'longevidade-alta' ? '↑'
+      : longClass === 'longevidade-media' ? '→' : '↓';
+
+    const longLabel = n.longevidade || 'Não avaliada';
+    const tendLabel = n.tendencia_mercado || '';
+    const longNote = n.longevidade_justificativa || '';
+
     card.innerHTML = `
       <div class="npc-header">
         <div class="npc-num">${i + 1}</div>
@@ -1449,6 +1511,13 @@ function renderPreviews(data) {
         <div class="npc-chip">Público: <span>${n.publico_alvo.substring(0, 50)}${n.publico_alvo.length > 50 ? '…' : ''}</span></div>
         <div class="npc-chip">Ticket: <span>${n.ticket_potencial}</span></div>
         <div class="npc-chip">Resultado: <span>${n.prazo_resultado}</span></div>
+      </div>
+      <div style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 2px;">
+        <div class="longevidade-row">
+          <span class="longevidade-badge ${longClass}">${longIcon} Longevidade: ${longLabel}</span>
+          ${tendLabel ? `<span class="tendencia-tag">Mercado: ${tendLabel}</span>` : ''}
+        </div>
+        ${longNote ? `<div class="longevidade-note">${longNote}</div>` : ''}
       </div>
       <button class="btn-choose" onclick="selectNiche(${i})">
         Quero explorar este nicho → Gerar estudo completo
