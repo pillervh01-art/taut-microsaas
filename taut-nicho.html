@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Taut — Diagnóstico de Nicho</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #131110;
+      --surface:    #1e1b19;
+      --border:     rgba(244,241,235,0.10);
+      --accent:     #B85C35;
+      --accent-dim: #9e4e2d;
+      --text:       #F4F1EB;
+      --muted:      #8a7e78;
+      --muted2:     #4f4540;
+      --danger:     #e05a5a;
+      --green:      #5ce67e;
+      --sg:         'Space Grotesk', 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+    }
+    .taut-logo {
+      display: flex; align-items: flex-end; line-height: 1; gap: 0;
+    }
+    .taut-logo-word {
+      font-family: var(--sg);
+      font-weight: 600;
+      font-size: 20px;
+      color: var(--text);
+      letter-spacing: 0.1em;
+      line-height: 1;
+    }
+    .taut-logo-dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      margin-left: 3px;
+      margin-bottom: 4px;
+      flex-shrink: 0;
+    }
+
+    main {
+      width: 100%;
+      max-width: 680px;
+      padding: 48px 24px 80px;
+      flex: 1;
+    }
+
+    /* BADGE */
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(184,92,53,0.10); border: 1px solid rgba(184,92,53,0.25);
+      color: var(--accent); border-radius: 20px;
+      padding: 4px 12px; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      width: fit-content; font-family: var(--sg);
+    }
+    .badge::before { content: '●'; font-size: 8px; }
+
+    h1 {
+      font-family: var(--sg);
+      font-size: 28px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em;
+    }
+    h1 span { color: var(--accent); }
+    .subtitle { color: var(--muted); font-size: 15px; line-height: 1.7; font-weight: 400; }
+
+    .input-group { display: flex; flex-direction: column; gap: 8px; }
+    label { font-size: 13px; font-weight: 500; color: var(--muted); }
+
+    input[type="text"], input[type="password"] {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Courier New', monospace;
+      width: 100%;
+      transition: border-color 0.2s;
+    }
+    input:focus { outline: none; border-color: var(--accent); }
+
+    .hint { font-size: 12px; color: var(--muted); }
+    .hint a { color: var(--accent); text-decoration: none; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      width: 100%;
+    }
+    .btn-primary:hover { background: var(--accent-dim); }
+    .btn-primary:active { transform: scale(0.99); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+
+    /* INTRO */
+    #screen-intro { display: none; flex-direction: column; gap: 24px; }
+
+    .steps-preview {
+      display: flex; flex-direction: column; gap: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden;
+    }
+    .step-item {
+      display: flex; align-items: flex-start; gap: 16px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .step-item:last-child { border-bottom: none; }
+    .step-num {
+      min-width: 28px; height: 28px;
+      background: rgba(184,92,53,0.12);
+      border: 1px solid rgba(184,92,53,0.2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--sg); font-size: 12px; font-weight: 700; color: var(--accent);
+      margin-top: 2px;
+    }
+    .step-info h3 { font-family: var(--sg); font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .step-info p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* QUALITY CALLOUT */
+    .quality-callout {
+      background: rgba(184,92,53,0.06);
+      border: 1px solid rgba(184,92,53,0.2);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .quality-callout .icon { font-size: 22px; flex-shrink: 0; }
+    .quality-callout h3 { font-family: var(--sg); font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 6px; }
+    .quality-callout p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+    /* QUESTIONS */
+    #screen-questions { display: none; flex-direction: column; gap: 28px; }
+
+    .progress-bar {
+      height: 3px; background: var(--border);
+      border-radius: 2px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: var(--accent);
+      border-radius: 2px; transition: width 0.4s ease;
+    }
+    .progress-label {
+      font-size: 12px; color: var(--muted);
+      display: flex; justify-content: space-between;
+      margin-top: 8px;
+    }
+
+    .question-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .question-card h2 {
+      font-family: var(--sg);
+      font-size: 19px; font-weight: 600; line-height: 1.35;
+      letter-spacing: -0.01em;
+    }
+
+    .q-why {
+      background: rgba(184,92,53,0.05);
+      border-left: 2px solid rgba(184,92,53,0.4);
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      font-size: 13px; color: var(--muted);
+      line-height: 1.6;
+    }
+    .q-why strong { color: var(--accent); font-weight: 600; font-family: var(--sg); }
+
+    .q-instruction {
+      font-size: 13px; color: var(--muted); line-height: 1.6;
+    }
+    .q-instruction em { color: var(--text); font-style: normal; font-weight: 500; }
+
+    .textarea-wrap { position: relative; }
+    textarea {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      padding-bottom: 36px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      width: 100%;
+      resize: vertical;
+      min-height: 130px;
+      line-height: 1.7;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { outline: none; border-color: var(--accent); }
+
+    .char-counter {
+      position: absolute;
+      bottom: 10px; right: 12px;
+      font-size: 11px; color: var(--muted2);
+      transition: color 0.2s;
+      pointer-events: none;
+    }
+    .char-counter.ok { color: var(--green); }
+
+    .input-row {
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .btn-mic {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      flex-shrink: 0;
+    }
+    .btn-mic:hover { border-color: var(--accent); }
+    .btn-mic.recording {
+      border-color: var(--danger);
+      background: rgba(224,90,90,0.1);
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(224,90,90,0.3); }
+      50% { box-shadow: 0 0 0 6px rgba(224,90,90,0); }
+    }
+
+    .q-example {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 12px; color: var(--muted2);
+      line-height: 1.6;
+    }
+    .q-example .ex-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px;
+    }
+    .q-example .ex-text { color: var(--muted); font-style: italic; }
+
+    .options-grid { display: flex; flex-direction: column; gap: 8px; }
+    .option-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .option-btn:hover { border-color: var(--accent); }
+    .option-btn.selected {
+      border-color: var(--accent);
+      background: rgba(184,92,53,0.08);
+    }
+    .option-btn .opt-check {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      min-width: 18px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .option-btn.selected .opt-check {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #000;
+    }
+
+    .nav-btns { display: flex; gap: 10px; }
+    .nav-btns .btn-ghost { flex: 1; }
+    .nav-btns .btn-primary { flex: 2; }
+
+    /* LOADING SCREENS */
+    #screen-loading, #screen-loading2 {
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 24px; min-height: 400px; text-align: center;
+    }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-steps { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+    .loading-step {
+      font-size: 13px; color: var(--muted2);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .loading-step.active { color: var(--accent); }
+    .loading-step::before { content: '·'; font-size: 20px; line-height: 0; }
+    .loading-step.active::before { content: '›'; }
+
+    /* RESULTS (PREVIEW) */
+    #screen-results { display: none; flex-direction: column; gap: 28px; }
+    .results-header { display: flex; flex-direction: column; gap: 8px; }
+
+    .niche-preview-cards { display: flex; flex-direction: column; gap: 14px; }
+    .niche-preview-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      display: flex; flex-direction: column; gap: 14px;
+      transition: border-color 0.2s, transform 0.1s;
+      cursor: pointer;
+    }
+    .niche-preview-card:hover {
+      border-color: rgba(184,92,53,0.5);
+      transform: translateY(-1px);
+    }
+    .niche-preview-card.top-pick {
+      border-color: rgba(184,92,53,0.5);
+      background: rgba(184,92,53,0.04);
+    }
+    .npc-header {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    }
+    .npc-num {
+      min-width: 26px; height: 26px;
+      background: rgba(184,92,53,0.12);
+      border: 1px solid rgba(184,92,53,0.25);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--sg); font-size: 12px; font-weight: 700; color: var(--accent);
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .npc-title-wrap { flex: 1; }
+    .npc-title { font-family: var(--sg); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+    .npc-tagline { font-size: 13px; color: var(--muted); margin-top: 3px; line-height: 1.5; font-style: italic; }
+    .top-pick-tag {
+      background: var(--accent); color: #000;
+      font-size: 10px; font-weight: 800;
+      padding: 3px 8px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .npc-angle {
+      background: rgba(184,92,53,0.05);
+      border: 1px solid rgba(184,92,53,0.15);
+      border-radius: 8px; padding: 10px 12px;
+      font-size: 13px; color: var(--muted); line-height: 1.6;
+    }
+    .npc-angle strong {
+      font-family: var(--sg); font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.10em; color: var(--accent); display: block; margin-bottom: 4px;
+    }
+    .npc-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .npc-chip {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px;
+      font-size: 12px; color: var(--muted);
+    }
+    .npc-chip span { color: var(--text); font-weight: 600; }
+    .btn-choose {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 11px 18px;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      text-align: center;
+      font-family: inherit;
+    }
+    .btn-choose:hover { background: var(--accent); color: #000; }
+
+    /* CONFIRM SCREEN */
+    #screen-confirm { display: none; flex-direction: column; gap: 24px; }
+    .confirm-niche-card {
+      background: var(--surface);
+      border: 1px solid rgba(184,92,53,0.4);
+      border-radius: 14px; padding: 24px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .confirm-niche-name { font-size: 20px; font-weight: 700; }
+    .confirm-niche-tagline { font-size: 14px; color: var(--muted); line-height: 1.5; }
+    .study-preview-list {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .spl-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px; color: var(--muted);
+    }
+    .spl-item:last-child { border-bottom: none; }
+    .spl-item .spl-icon { font-size: 16px; width: 22px; text-align: center; }
+    .spl-item strong { color: var(--text); }
+
+    /* STUDY SCREEN */
+    #screen-study { display: none; flex-direction: column; gap: 0; }
+    .study-topbar {
+      display: flex; gap: 10px; margin-bottom: 28px; align-items: center;
+      flex-wrap: wrap;
+    }
+    .study-topbar .badge { margin-right: auto; }
+    .btn-download {
+      background: var(--accent); color: #000;
+      border: none; border-radius: 10px;
+      padding: 11px 20px; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: background 0.2s;
+      display: flex; align-items: center; gap: 8px;
+      font-family: inherit;
+    }
+    .btn-download:hover { background: var(--accent-dim); }
+
+    /* THE STUDY DOCUMENT */
+    .study-doc {
+      background: #fff;
+      color: #1a1a1a;
+      border-radius: 16px;
+      overflow: hidden;
+      font-family: 'Georgia', 'Times New Roman', serif;
+    }
+
+    .study-cover {
+      background: #131110;
+      color: #F4F1EB;
+      padding: 48px 48px 40px;
+    }
+    .study-cover .cover-logo {
+      display: flex; align-items: flex-end; gap: 0; margin-bottom: 48px; line-height: 1;
+    }
+    .study-cover .cover-logo-word {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px; font-weight: 600; color: #F4F1EB;
+      letter-spacing: 0.1em; line-height: 1;
+    }
+    .study-cover .cover-logo-dot {
+      width: 7px; height: 7px;
+      background: #B85C35;
+      border-radius: 50%;
+      margin-left: 3px; margin-bottom: 4px; flex-shrink: 0;
+    }
+    .study-cover .cover-eyebrow {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.14em; color: #B85C35; margin-bottom: 14px;
+    }
+    .study-cover h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 26px; font-weight: 700; line-height: 1.25;
+      letter-spacing: -0.01em; color: #F4F1EB; margin-bottom: 16px;
+    }
+    .study-cover .cover-meta {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; color: #5E5650;
+    }
+    .study-cover .cover-divider {
+      border: none; border-top: 1px solid rgba(244,241,235,0.1);
+      margin: 28px 0;
+    }
+    .study-cover .cover-disclaimer {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px; color: #4a3f3a; line-height: 1.7;
+    }
+
+    .study-body { padding: 40px 48px; }
+
+    .study-section { margin-bottom: 40px; }
+    .study-section-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.14em; color: #B85C35; margin-bottom: 6px;
+    }
+    .study-section h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px; font-weight: 700; color: #131110;
+      letter-spacing: -0.01em; margin-bottom: 16px; line-height: 1.3;
+      border-bottom: 2px solid #ede5d8; padding-bottom: 10px;
+    }
+    .study-section p {
+      font-size: 14px; line-height: 1.8; color: #333;
+      margin-bottom: 12px;
+    }
+    .study-section p:last-child { margin-bottom: 0; }
+
+    .study-subsection { margin-bottom: 20px; }
+    .study-subsection h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px; font-weight: 700; color: #131110;
+      text-transform: uppercase; letter-spacing: 0.10em;
+      margin-bottom: 8px;
+    }
+
+    .study-bullets { list-style: none; padding: 0; margin-bottom: 12px; }
+    .study-bullets li {
+      font-size: 14px; line-height: 1.7; color: #333;
+      padding: 5px 0 5px 18px; position: relative;
+    }
+    .study-bullets li::before {
+      content: '▸'; position: absolute; left: 0;
+      color: #B85C35; font-size: 12px; top: 6px;
+    }
+    .study-bullets li strong { color: #1a1a1a; }
+
+    .study-segment-card {
+      background: #fafafa;
+      border: 1px solid #e8e8e8;
+      border-left: 3px solid #B85C35;
+      border-radius: 0 8px 8px 0;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .study-segment-card h4 {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; font-weight: 700; color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+    .study-segment-card p { font-size: 13px; margin-bottom: 6px; }
+    .study-segment-chip {
+      display: inline-block;
+      background: #fdf0ea; border: 1px solid #d4906e;
+      border-radius: 4px; padding: 2px 8px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px; color: #7a3418; font-weight: 600;
+      margin-right: 6px; margin-bottom: 4px;
+    }
+
+    .study-product-card {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px; padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .study-product-card h4 {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px; font-weight: 700; color: #1a1a1a;
+      margin-bottom: 6px;
+    }
+    .study-product-card p { font-size: 13px; margin-bottom: 6px; color: #555; }
+    .study-product-ticket {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px; font-weight: 700;
+      background: #fdf0ea; color: #7a3418;
+      border-radius: 4px; padding: 3px 8px;
+      display: inline-block;
+    }
+
+    /* CHANNELS TABLE */
+    .study-table {
+      width: 100%; border-collapse: collapse;
+      font-family: 'Inter', sans-serif; font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .study-table th {
+      background: #131110; color: #F4F1EB;
+      padding: 9px 12px; text-align: left;
+      font-weight: 600; font-size: 12px;
+      font-family: 'Space Grotesk', sans-serif;
+      text-transform: uppercase; letter-spacing: 0.07em;
+    }
+    .study-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e8e8e8;
+      vertical-align: top; color: #333; line-height: 1.5;
+    }
+    .study-table tr:last-child td { border-bottom: none; }
+    .study-table tr:nth-child(even) td { background: #fafafa; }
+    .pot-alto { color: #2e7d32; font-weight: 700; }
+    .pot-medio { color: #e65100; font-weight: 700; }
+    .pot-baixo { color: #c62828; font-weight: 700; }
+
+    .study-recs { display: flex; flex-direction: column; gap: 10px; }
+    .study-rec {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 14px;
+      background: #fafafa; border: 1px solid #e8e8e8;
+      border-radius: 8px;
+    }
+    .study-rec .rec-num {
+      min-width: 24px; height: 24px;
+      background: #B85C35; color: #F4F1EB;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+    .study-rec p { font-size: 14px; line-height: 1.6; color: #333; }
+
+    .study-refs {
+      background: #fafafa; border: 1px solid #e8e8e8;
+      border-radius: 8px; padding: 16px;
+    }
+    .study-refs h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px; font-weight: 700; color: #131110;
+      margin-bottom: 10px; text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .study-refs li {
+      font-size: 12px; line-height: 1.6; color: #555;
+      padding: 4px 0; list-style: none;
+    }
+    .study-refs li a { color: #B85C35; text-decoration: none; }
+
+    /* ERROR */
+    .error-msg {
+      background: rgba(224, 90, 90, 0.1);
+      border: 1px solid rgba(224, 90, 90, 0.3);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px; color: var(--danger);
+      display: none;
+    }
+
+    .divider { border: none; border-top: 1px solid var(--border); }
+
+    /* MISC */
+    .next-steps-block {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 24px; display: none;
+    }
+    .next-steps-block h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+    .next-steps-list { display: flex; flex-direction: column; gap: 10px; }
+    .next-step {
+      display: flex; align-items: flex-start; gap: 12px;
+      font-size: 14px; color: var(--muted); line-height: 1.5;
+    }
+    .next-step .ns-num {
+      min-width: 22px; height: 22px;
+      background: rgba(184,92,53,0.12);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--accent);
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 22px; }
+      .question-card { padding: 20px; }
+      .study-cover { padding: 32px 24px; }
+      .study-body { padding: 28px 24px; }
+    }
+
+    /* PRINT STYLES */
+    @media print {
+      body { background: #fff; display: block; }
+      header, .study-topbar, #screen-results, #screen-confirm,
+      #screen-apikey, #screen-intro, #screen-questions,
+      #screen-loading, #screen-loading2 { display: none !important; }
+      main { max-width: 100%; padding: 0; }
+      #screen-study { display: flex !important; }
+      .study-doc { border-radius: 0; }
+      .study-cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .study-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .study-rec .rec-num { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .study-section { page-break-inside: avoid; }
+      .study-segment-card { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="taut-logo">
+    <span class="taut-logo-word">taut</span>
+    <div class="taut-logo-dot"></div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 0 — API KEY
+  ══════════════════════════════════════ -->
+  <div id="screen-apikey" style="display:flex; flex-direction:column; gap:24px;">
+    <div class="badge">Versão Beta</div>
+    <div>
+      <h1>Descubra seu <span>nicho ideal</span> na advocacia</h1>
+      <p class="subtitle" style="margin-top:10px;">
+        Em 9 perguntas, a IA analisa sua trajetória e entrega um <strong style="color:var(--text)">estudo completo de viabilidade de nicho</strong> — o mesmo tipo de análise que estrategistas cobram R$ 2.000+.
+      </p>
+    </div>
+
+    <div class="input-group">
+      <label for="apikey-input">Sua chave da API Anthropic</label>
+      <input type="password" id="apikey-input" placeholder="sk-ant-..." autocomplete="off" />
+      <p class="hint">
+        Ainda não tem? <a href="https://console.anthropic.com" target="_blank">Crie sua conta em console.anthropic.com</a> — leva menos de 5 minutos.
+      </p>
+    </div>
+
+    <div id="apikey-error" class="error-msg">Chave inválida. Verifique e tente novamente.</div>
+    <button class="btn-primary" onclick="saveApiKey()">Continuar →</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 1 — INTRO
+  ══════════════════════════════════════ -->
+  <div id="screen-intro">
+    <div class="badge">Diagnóstico de Nicho</div>
+    <div>
+      <h1>Como funciona o <span>diagnóstico</span></h1>
+      <p class="subtitle" style="margin-top:10px;">
+        9 perguntas sobre sua trajetória, seus melhores clientes e onde você quer chegar. A IA cruza tudo e entrega um estudo estratégico completo sobre o nicho ideal para o seu perfil.
+      </p>
+    </div>
+
+    <div class="quality-callout">
+      <div class="icon">✦</div>
+      <div>
+        <h3>Quanto mais você escreve, mais preciso o resultado</h3>
+        <p>A IA não trabalha com checkboxes — ela analisa contexto, história e padrões. Uma resposta de 3 linhas vai gerar algo genérico. Uma resposta detalhada, com os porquês e exemplos reais, vai gerar um estudo que você vai querer usar de verdade. <strong style="color:var(--text)">Trate cada pergunta como uma conversa com um consultor sênior.</strong></p>
+      </div>
+    </div>
+
+    <div class="steps-preview">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-info">
+          <h3>Sua trajetória e clientes</h3>
+          <p>De onde você veio, como chegou aqui e onde fez diferença de verdade.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-info">
+          <h3>Sua opinião e visão de futuro</h3>
+          <p>O que você discorda do mercado e onde quer chegar em 2 anos.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-info">
+          <h3>3 caminhos estratégicos</h3>
+          <p>A IA identifica seus 3 nichos com maior potencial. Você escolhe um.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-info">
+          <h3>Estudo completo + PDF</h3>
+          <p>Viabilidade, público-alvo, produtos, canais e referências. Pronto para baixar.</p>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="startQuestions()">Começar diagnóstico →</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 2 — QUESTIONS
+  ══════════════════════════════════════ -->
+  <div id="screen-questions">
+    <div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <div class="progress-label">
+        <span id="progress-label-text">Pergunta 1 de 9</span>
+        <span id="progress-pct">0%</span>
+      </div>
+    </div>
+
+    <div class="question-card" id="question-card">
+      <h2 id="q-title"></h2>
+      <div id="q-why" class="q-why" style="display:none"></div>
+      <div id="q-instruction" class="q-instruction" style="display:none"></div>
+      <div id="q-input-area"></div>
+      <div id="q-example-block" class="q-example" style="display:none">
+        <div class="ex-label">Exemplo de resposta que gera diagnóstico preciso</div>
+        <div class="ex-text" id="q-example-text"></div>
+      </div>
+      <div id="q-error" class="error-msg">Por favor, preencha esse campo antes de continuar.</div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn-ghost" id="btn-back" onclick="prevQuestion()">← Voltar</button>
+      <button class="btn-primary" id="btn-next" onclick="nextQuestion()">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 3 — LOADING (step 1)
+  ══════════════════════════════════════ -->
+  <div id="screen-loading">
+    <div class="spinner"></div>
+    <div>
+      <h2>Analisando seu perfil…</h2>
+      <p style="color:var(--muted); font-size:14px; margin-top:8px; max-width:340px; line-height:1.6;">Cruzando suas respostas com os princípios de posicionamento da Taut para identificar os 3 nichos com maior potencial.</p>
+      <div class="loading-steps" style="margin-top:20px; text-align:left;">
+        <div class="loading-step active" id="ls1">Mapeando padrões da sua trajetória</div>
+        <div class="loading-step" id="ls2">Identificando lacunas de mercado</div>
+        <div class="loading-step" id="ls3">Cruzando perfil com nichos de alto potencial</div>
+        <div class="loading-step" id="ls4">Construindo os 3 caminhos estratégicos</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 4 — RESULTS (PREVIEW)
+  ══════════════════════════════════════ -->
+  <div id="screen-results">
+    <div class="results-header">
+      <div class="badge">Diagnóstico concluído</div>
+      <h1>Seus <span>3 caminhos</span> estratégicos</h1>
+      <p class="subtitle">A IA identificou os nichos com maior fit para o seu perfil. Leia cada um e escolha o que mais ressoa com você — depois geramos o estudo completo.</p>
+    </div>
+
+    <div class="niche-preview-cards" id="niche-preview-cards"></div>
+
+    <div class="next-steps-block" id="next-steps-block">
+      <h3>Próximos passos (independente do nicho escolhido)</h3>
+      <div class="next-steps-list" id="next-steps-list"></div>
+    </div>
+
+    <button class="btn-ghost" onclick="restart()" style="text-align:center; width:100%;">← Refazer diagnóstico</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 5 — CONFIRM NICHE
+  ══════════════════════════════════════ -->
+  <div id="screen-confirm">
+    <div>
+      <div class="badge">Você escolheu</div>
+      <h1 style="margin-top:12px;">Pronto para o <span>estudo completo</span>?</h1>
+      <p class="subtitle" style="margin-top:8px;">Vamos gerar um estudo de viabilidade aprofundado sobre o nicho que você selecionou — com dados de mercado, público-alvo, produtos jurídicos, canais e referências.</p>
+    </div>
+
+    <div class="confirm-niche-card">
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent);">Nicho selecionado</div>
+      <div class="confirm-niche-name" id="confirm-niche-name"></div>
+      <div class="confirm-niche-tagline" id="confirm-niche-tagline"></div>
+    </div>
+
+    <div>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">O estudo vai incluir:</p>
+      <div class="study-preview-list">
+        <div class="spl-item"><span class="spl-icon">📊</span><div><strong>Viabilidade do nicho</strong> — TAM estimado, tendências e dores de mercado</div></div>
+        <div class="spl-item"><span class="spl-icon">🎯</span><div><strong>Público-alvo ideal</strong> — 3–4 segmentos com perfil, dores e momento de compra</div></div>
+        <div class="spl-item"><span class="spl-icon">⚖️</span><div><strong>Produtos jurídicos estratégicos</strong> — serviços com formato e faixa de ticket</div></div>
+        <div class="spl-item"><span class="spl-icon">📣</span><div><strong>Canais de aquisição</strong> — onde e como se posicionar para atrair esse cliente</div></div>
+        <div class="spl-item"><span class="spl-icon">✅</span><div><strong>Recomendações finais</strong> — próximos passos específicos e acionáveis</div></div>
+        <div class="spl-item"><span class="spl-icon">📚</span><div><strong>Referências</strong> — fontes e dados que embasam o estudo</div></div>
+      </div>
+    </div>
+
+    <div id="confirm-error" class="error-msg">Erro ao gerar o estudo. Tente novamente.</div>
+
+    <button class="btn-primary" onclick="generateDeepStudy()">Gerar estudo completo →</button>
+    <button class="btn-ghost" onclick="show('screen-results')" style="text-align:center; width:100%;">← Voltar e escolher outro nicho</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 6 — LOADING (deep study)
+  ══════════════════════════════════════ -->
+  <div id="screen-loading2">
+    <div class="spinner"></div>
+    <div>
+      <h2>Gerando seu estudo…</h2>
+      <p style="color:var(--muted); font-size:14px; margin-top:8px; max-width:340px; line-height:1.6;">Isso pode levar 30–60 segundos. A IA está pesquisando o mercado, mapeando segmentos e construindo o estudo estratégico.</p>
+      <div class="loading-steps" style="margin-top:20px; text-align:left;">
+        <div class="loading-step active" id="ls21">Analisando viabilidade e tamanho de mercado</div>
+        <div class="loading-step" id="ls22">Mapeando segmentos do público-alvo</div>
+        <div class="loading-step" id="ls23">Identificando produtos jurídicos estratégicos</div>
+        <div class="loading-step" id="ls24">Mapeando canais e parcerias</div>
+        <div class="loading-step" id="ls25">Compilando referências e recomendações</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN 7 — STUDY
+  ══════════════════════════════════════ -->
+  <div id="screen-study">
+    <div class="study-topbar">
+      <div class="badge">Estudo concluído</div>
+      <button class="btn-download" onclick="downloadPDF()">⬇ Baixar PDF</button>
+      <button class="btn-ghost" onclick="show('screen-results')" style="padding:11px 16px; font-size:13px;">← Escolher outro nicho</button>
+    </div>
+    <div class="study-doc" id="study-doc">
+      <!-- populated by renderStudy() -->
+    </div>
+    <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn-download" onclick="downloadPDF()" style="flex:1;">⬇ Baixar PDF</button>
+      <button class="btn-ghost" onclick="restart()" style="flex:1; text-align:center;">Novo diagnóstico</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let apiKey = '';
+let currentQ = 0;
+let answers = {};
+let recognition = null;
+let isRecording = false;
+let selectedNiche = null;
+let allNiches = null;
+
+// ══════════════════════════════════════════════
+// QUESTIONS CONFIG
+// ══════════════════════════════════════════════
+const questions = [
+  {
+    id: 'trajetoria',
+    title: 'Conta sua trajetória na advocacia.',
+    why: 'Não existe posicionamento sem história. Queremos entender como você chegou onde chegou — porque os melhores nichos quase sempre estão escondidos na trajetória, não no que a pessoa planeja fazer.',
+    instruction: 'Onde você começou, como foi evoluindo, quais áreas você passou, o que te atraiu pra cada uma. Se tiver viradas importantes — cases que mudaram sua visão, decisões difíceis, momentos de "não era isso que eu queria" — conta também. <em>Quanto mais detalhe, mais preciso o diagnóstico.</em>',
+    type: 'textarea',
+    minChars: 200,
+    placeholder: 'Comecei no escritório X, onde atuei em... Depois migrei para... O que me fez mudar foi... Hoje atuo principalmente em...',
+    example: 'Comecei num escritório grande de trabalhista, fiz 4 anos defendendo empresas em ações de ex-funcionários. Saí pra montar meu próprio escritório em 2019. Tentei fazer de tudo por uns 2 anos. Em 2021 comecei a pegar só clientes de tecnologia por indicação e percebi que eu gostava muito mais. Hoje 60% do meu faturamento vem de startups e fintechs, mas ainda aceito qualquer coisa por medo de fechar o escritório.'
+  },
+  {
+    id: 'melhores_clientes',
+    title: 'Pensa nos 2 ou 3 clientes com quem você mais gostou de trabalhar em toda a sua carreira.',
+    why: 'Os melhores clientes revelam seu nicho. Não estamos falando dos que pagaram mais — estamos falando dos que te deram mais energia, onde o trabalho fluiu, onde você fez diferença de verdade.',
+    instruction: 'Descreve quem são (sem nome): o segmento, o porte, o que precisavam de você, o que você resolveu, e <em>por que eles ficaram na sua memória.</em> O "por que" é o mais importante.',
+    type: 'textarea',
+    minChars: 200,
+    placeholder: 'Cliente 1: uma empresa de médio porte do setor X, precisava de Y... O que eu fiz foi... O que ficou na memória foi...',
+    example: 'O melhor cliente que já tive foi uma startup de saúde digital que precisava estruturar todos os contratos com hospitais parceiros. O dono era muito pragmático, respeitava minha análise. Resolvemos questões de propriedade intelectual e proteção de dados que eles não tinham ideia que existiam. No final de 8 meses, ele disse que minha atuação foi determinante para fechar uma rodada de série A. Isso me deu um prazer que trabalhar com empresa de construção nunca deu.'
+  },
+  {
+    id: 'melhor_caso',
+    title: 'Conta o caso que você mais se orgulha em toda a sua carreira.',
+    why: 'A forma como você resolveu seu melhor caso revela seu diferencial real. Não é o resultado que importa — é o que você fez de diferente.',
+    instruction: 'O que estava em jogo? O que você fez de diferente? Qual foi o resultado? Por que esse caso ficou na sua memória? <em>Seja específico — números, contexto, o que estava em risco.</em>',
+    type: 'textarea',
+    minChars: 150,
+    placeholder: 'Defendi uma empresa numa situação em que... O que estava em jogo era... O que eu fiz de diferente foi... O resultado foi...',
+    example: 'Defendi uma empresa de logística numa autuação fiscal de R$2,3M que parecia perdida. Identifiquei uma irregularidade na notificação inicial que invalidava toda a base da autuação. Conseguimos cancelar 80% do auto. O que ficou na memória não foi o valor — foi perceber que minha capacidade de ler o processo completo antes de entrar com qualquer recurso me diferencia da maioria.'
+  },
+  {
+    id: 'nao_quer',
+    title: 'O que você definitivamente não quer mais fazer?',
+    why: 'Delimitar o que fica de fora do nicho é tão estratégico quanto definir o que entra.',
+    instruction: 'Tipos de caso que te cansam. Perfis de cliente que te tomam energia sem retorno. Áreas que você consegue fazer mas não quer mais. <em>Seja honesto — isso só vai calibrar o diagnóstico.</em>',
+    type: 'textarea',
+    minChars: 100,
+    placeholder: 'Não quero mais... / Clientes que me esgotam são aqueles que... / Prefiro não trabalhar mais com...',
+    example: 'Não quero mais atender pessoa física com causas de valor baixo — consome o mesmo tempo que uma empresa. Também não quero mais causas criminais. E definitivamente não quero mais clientes que tratam advogado como despesa e questionam cada hora trabalhada.'
+  },
+  {
+    id: 'melhor_em_uma_coisa',
+    title: 'Se você fosse o melhor do Brasil em uma coisa só dentro da advocacia, qual seria?',
+    why: 'Essa pergunta não é sobre sua realidade hoje — é sobre onde você tem mais afinidade e mais profundidade natural.',
+    instruction: 'Não precisa ser humilde nem exato. <em>O que você faria se pudesse escolher com total liberdade — sabendo que levaria 2 anos para chegar lá?</em> Explica também por que essa coisa específica e não outra.',
+    type: 'textarea',
+    minChars: 100,
+    placeholder: 'Seria o melhor em... porque... / Tenho mais afinidade com... / Essa escolha faz sentido porque...',
+    example: 'Seria o melhor do Brasil em estruturar contratos e societário para empresas de tecnologia em fase de crescimento. Faz sentido porque é onde me sinto mais inteligente — o cruzamento entre o jurídico e o contexto de negócio de startup me deixa estimulado.'
+  },
+  {
+    id: 'opiniao_forte',
+    title: 'Tem algo que a maioria dos advogados da sua área faz ou prega que você acha errado?',
+    why: 'Posicionamento real exige opinião. O que diferencia um advogado de referência é ter uma perspectiva que alguém pode discordar — e defender com coerência.',
+    instruction: 'Pode ser sobre como os clientes são atendidos, sobre comunicação, sobre estratégia jurídica, sobre precificação. <em>Não precisa ser radical — só precisa ser genuíno.</em>',
+    type: 'textarea',
+    minChars: 100,
+    placeholder: 'Acho errado quando advogados fazem... / O mercado jurídico erra quando... / Tenho uma visão diferente sobre...',
+    example: 'Acho que advogados vendem complexidade quando deveriam vender simplicidade. O cliente não quer saber que o caso é difícil — ele quer saber o que você vai fazer. A maioria usa juridiquês pra parecer sofisticado e só cria distância. O advogado que consegue traduzir o complexo em linguagem de negócio vai ganhar no longo prazo.'
+  },
+  {
+    id: 'resultado_desejado',
+    title: 'Imagina que daqui 2 anos sua marca está consolidada no seu nicho. Como é?',
+    why: 'Todo posicionamento começa pelo resultado desejado e trabalha de trás para frente.',
+    instruction: 'Seja concreto: que tipo de cliente te procura? Como eles chegam? O que você cobra? Como é sua semana? Tem equipe? <em>Quanto mais você visualizar, mais calibrado fica o diagnóstico.</em>',
+    type: 'textarea',
+    minChars: 100,
+    placeholder: 'Em 2 anos, quero que clientes de X me procurem por... Quero cobrar Y por Z... Minha semana ideal seria...',
+    example: 'Em 2 anos quero que sócios de startups de healthtech me procurem por indicação de VCs e aceleradoras. Quero cobrar por projeto, não por hora — projetos de R$20-50k com escopo definido. Quero ter um sócio para dividir a operação e sobrar tempo para escrever conteúdo no LinkedIn toda semana.'
+  },
+  {
+    id: 'revenue',
+    title: 'Qual é o faturamento médio anual do seu escritório hoje?',
+    why: null,
+    instruction: 'Isso ajuda a calibrar o potencial de crescimento e o nível de posicionamento mais adequado para o seu momento.',
+    type: 'options',
+    options: [
+      'Até R$ 150 mil/ano',
+      'Entre R$ 150 mil e R$ 300 mil/ano',
+      'Entre R$ 300 mil e R$ 600 mil/ano',
+      'Entre R$ 600 mil e R$ 1,2 milhão/ano',
+      'Acima de R$ 1,2 milhão/ano',
+      'Prefiro não informar'
+    ]
+  },
+  {
+    id: 'scope',
+    title: 'Sua atuação é local, regional ou nacional?',
+    why: null,
+    instruction: 'Onde estão — ou onde podem estar — seus clientes ideais?',
+    type: 'options',
+    options: [
+      'Local — atendo apenas minha cidade ou região',
+      'Estadual — atendo clientes no meu estado',
+      'Nacional — já atendo ou quero atender em qualquer lugar do Brasil',
+      'Internacional — já tenho ou quero clientes fora do Brasil'
+    ]
+  }
+];
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function show(id) {
+  ['screen-apikey','screen-intro','screen-questions','screen-loading',
+   'screen-results','screen-confirm','screen-loading2','screen-study']
+    .forEach(s => {
+      const el = document.getElementById(s);
+      if (el) el.style.display = 'none';
+    });
+  const target = document.getElementById(id);
+  if (target) target.style.display = 'flex';
+}
+
+function saveApiKey() {
+  const val = document.getElementById('apikey-input').value.trim();
+  if (!val.startsWith('sk-ant-') && !val.startsWith('sk-')) {
+    document.getElementById('apikey-error').style.display = 'block';
+    return;
+  }
+  document.getElementById('apikey-error').style.display = 'none';
+  apiKey = val;
+  show('screen-intro');
+}
+
+function startQuestions() {
+  currentQ = 0;
+  answers = {};
+  renderQuestion();
+  show('screen-questions');
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  const pct = Math.round((currentQ / questions.length) * 100);
+
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label-text').textContent = `Pergunta ${currentQ + 1} de ${questions.length}`;
+  document.getElementById('progress-pct').textContent = pct + '%';
+
+  document.getElementById('q-title').textContent = q.title;
+  document.getElementById('q-error').style.display = 'none';
+
+  const whyEl = document.getElementById('q-why');
+  if (q.why) {
+    whyEl.innerHTML = '<strong>Por que perguntamos isso:</strong> ' + q.why;
+    whyEl.style.display = 'block';
+  } else {
+    whyEl.style.display = 'none';
+  }
+
+  const instrEl = document.getElementById('q-instruction');
+  if (q.instruction) {
+    instrEl.innerHTML = q.instruction;
+    instrEl.style.display = 'block';
+  } else {
+    instrEl.style.display = 'none';
+  }
+
+  const exBlock = document.getElementById('q-example-block');
+  const exText = document.getElementById('q-example-text');
+  if (q.example) {
+    exText.textContent = q.example;
+    exBlock.style.display = 'block';
+  } else {
+    exBlock.style.display = 'none';
+  }
+
+  const area = document.getElementById('q-input-area');
+  area.innerHTML = '';
+
+  if (q.type === 'textarea') {
+    const row = document.createElement('div');
+    row.className = 'input-row';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'textarea-wrap';
+    wrap.style.flex = '1';
+
+    const ta = document.createElement('textarea');
+    ta.id = 'q-answer';
+    ta.placeholder = q.placeholder;
+    ta.rows = 6;
+    ta.value = answers[q.id] || '';
+
+    const counter = document.createElement('div');
+    counter.className = 'char-counter';
+    counter.id = 'char-counter';
+    const minC = q.minChars || 100;
+    counter.textContent = ta.value.length + ' / ' + minC + ' mín.';
+    if (ta.value.length >= minC) counter.classList.add('ok');
+
+    ta.addEventListener('input', () => {
+      const len = ta.value.length;
+      counter.textContent = len + ' / ' + minC + ' mín.';
+      counter.classList.toggle('ok', len >= minC);
+    });
+
+    wrap.appendChild(ta);
+    wrap.appendChild(counter);
+
+    const micBtn = document.createElement('button');
+    micBtn.className = 'btn-mic';
+    micBtn.title = 'Responder por voz';
+    micBtn.innerHTML = '🎙';
+    micBtn.id = 'btn-mic';
+    micBtn.onclick = () => toggleRecording(ta, micBtn);
+
+    row.appendChild(wrap);
+    row.appendChild(micBtn);
+    area.appendChild(row);
+
+  } else if (q.type === 'options') {
+    const grid = document.createElement('div');
+    grid.className = 'options-grid';
+    q.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn' + (answers[q.id] === opt ? ' selected' : '');
+      btn.innerHTML = `<span class="opt-check">${answers[q.id] === opt ? '✓' : ''}</span>${opt}`;
+      btn.onclick = () => {
+        answers[q.id] = opt;
+        document.querySelectorAll('.option-btn').forEach(b => {
+          b.classList.remove('selected');
+          b.querySelector('.opt-check').textContent = '';
+        });
+        btn.classList.add('selected');
+        btn.querySelector('.opt-check').textContent = '✓';
+      };
+      grid.appendChild(btn);
+    });
+    area.appendChild(grid);
+  }
+
+  document.getElementById('btn-back').style.display = currentQ === 0 ? 'none' : 'block';
+  document.getElementById('btn-next').textContent = currentQ === questions.length - 1 ? 'Ver meus nichos →' : 'Continuar →';
+}
+
+function nextQuestion() {
+  const q = questions[currentQ];
+  let val = '';
+
+  if (q.type === 'textarea') {
+    val = document.getElementById('q-answer').value.trim();
+  } else {
+    val = answers[q.id] || '';
+  }
+
+  if (!val) {
+    document.getElementById('q-error').style.display = 'block';
+    return;
+  }
+
+  answers[q.id] = val;
+
+  if (currentQ < questions.length - 1) {
+    currentQ++;
+    renderQuestion();
+    window.scrollTo(0, 0);
+  } else {
+    runAnalysis();
+  }
+}
+
+function prevQuestion() {
+  if (currentQ > 0) {
+    currentQ--;
+    renderQuestion();
+    window.scrollTo(0, 0);
+  }
+}
+
+function restart() {
+  currentQ = 0;
+  answers = {};
+  selectedNiche = null;
+  allNiches = null;
+  show('screen-apikey');
+}
+
+// ══════════════════════════════════════════════
+// VOICE INPUT
+// ══════════════════════════════════════════════
+function toggleRecording(textarea, btn) {
+  if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+    alert('Seu navegador não suporta reconhecimento de voz. Use o Chrome para essa funcionalidade.');
+    return;
+  }
+
+  if (isRecording) {
+    if (recognition) recognition.stop();
+    return;
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'pt-BR';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    btn.classList.add('recording');
+    btn.innerHTML = '⏹';
+    btn.title = 'Parar gravação';
+  };
+
+  recognition.onresult = (e) => {
+    let transcript = '';
+    for (let i = 0; i < e.results.length; i++) {
+      transcript += e.results[i][0].transcript;
+    }
+    const existing = textarea.dataset.beforeRecording || '';
+    textarea.value = existing + (existing ? ' ' : '') + transcript;
+    textarea.dispatchEvent(new Event('input'));
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    btn.classList.remove('recording');
+    btn.innerHTML = '🎙';
+    btn.title = 'Responder por voz';
+    textarea.dataset.beforeRecording = textarea.value;
+  };
+
+  textarea.dataset.beforeRecording = textarea.value;
+  recognition.start();
+}
+
+// ══════════════════════════════════════════════
+// LOADING ANIMATION
+// ══════════════════════════════════════════════
+function animateLoadingSteps(ids) {
+  let idx = 0;
+  const interval = setInterval(() => {
+    ids.forEach((s, i) => {
+      const el = document.getElementById(s);
+      if (el) el.classList.toggle('active', i === idx);
+    });
+    idx = (idx + 1) % ids.length;
+  }, 1800);
+  return interval;
+}
+
+// ══════════════════════════════════════════════
+// STEP 1 — IDENTIFY 3 NICHES
+// ══════════════════════════════════════════════
+async function runAnalysis() {
+  show('screen-loading');
+  const loadingInterval = animateLoadingSteps(['ls1','ls2','ls3','ls4']);
+
+  const systemPrompt = `Você é um estrategista de posicionamento da Taut — consultoria especializada em transformar advogados generalistas em referências de nicho. Sua tarefa é analisar profundamente o perfil do advogado e identificar os 3 nichos jurídicos com maior potencial estratégico para ele.
+
+━━━ PRINCÍPIOS FUNDAMENTAIS ━━━
+
+1. NICHO = expertise real + tipo de cliente específico + problema bem delimitado.
+"Trabalhista" não é nicho. "Defesa de empresas de tecnologia em ações trabalhistas de ex-sócios" é nicho.
+
+2. POSICIONAMENTO COMEÇA PELO RESULTADO DESEJADO
+Trabalhe de trás para frente. Cada nicho deve ser um caminho claro para o resultado em 2 anos.
+
+3. A HISTÓRIA É O DIFERENCIAL INCOPIÁVEL
+Nichos que ignoram a trajetória real resultam em posicionamento artificial.
+
+4. POSICIONAMENTO EXIGE OPINIÃO
+Um nicho forte tem um ângulo — uma perspectiva que outros não defendem publicamente.
+
+5. A LACUNA É O OURO — três tipos:
+- De informação: você sabe algo que outros não estão compartilhando
+- De filosofia: você tem uma visão diferente sobre o mesmo tema
+- De personalidade: você atinge um público que não se conectava com os outros
+
+6. O QUE O ADVOGADO NÃO QUER É TÃO IMPORTANTE QUANTO O QUE ELE QUER
+
+━━━ FORMATO DA RESPOSTA ━━━
+
+Responda EXCLUSIVAMENTE em JSON válido, sem texto fora do JSON:
+
+{
+  "nichos": [
+    {
+      "posicao": 1,
+      "nome": "Nome do nicho (específico, concreto — máximo 8 palavras)",
+      "tagline": "Uma frase de posicionamento com 10-14 palavras que alguém poderia discordar",
+      "descricao": "2 parágrafos. O que é esse nicho, qual problema resolve, por que há oportunidade.",
+      "porque_voce": "Conecte DIRETAMENTE às respostas — mencione casos, clientes ou opiniões específicas reveladas. Mostre que emergiu da trajetória dele.",
+      "lacuna_identificada": "O ângulo único que diferencia este advogado nesse nicho.",
+      "publico_alvo": "Descrição específica: segmento, porte/perfil, momento de vida, problema que os faz buscar esse advogado",
+      "ticket_potencial": "Baixo / Médio / Alto / Muito alto",
+      "dificuldade_posicionamento": "Baixa / Média / Alta",
+      "prazo_resultado": "X a Y meses"
+    }
+  ],
+  "proximo_passo": [
+    "Passo concreto 1",
+    "Passo concreto 2",
+    "Passo concreto 3"
+  ]
+}
+
+Ordene pelo maior fit com o perfil real. Seja direto e honesto — inclusive sobre riscos.`;
+
+  const userMessage = `Analise o perfil e gere os 3 nichos ideais.
+
+━━━ TRAJETÓRIA ━━━
+${answers.trajetoria}
+
+━━━ MELHORES CLIENTES ━━━
+${answers.melhores_clientes}
+
+━━━ MELHOR CASO ━━━
+${answers.melhor_caso}
+
+━━━ O QUE NÃO QUER ━━━
+${answers.nao_quer}
+
+━━━ SE FOSSE O MELHOR EM UMA COISA ━━━
+${answers.melhor_em_uma_coisa}
+
+━━━ OPINIÃO FORTE ━━━
+${answers.opiniao_forte}
+
+━━━ RESULTADO EM 2 ANOS ━━━
+${answers.resultado_desejado}
+
+━━━ FATURAMENTO ━━━
+${answers.revenue}
+
+━━━ ABRANGÊNCIA ━━━
+${answers.scope}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5-20251101',
+        max_tokens: 4000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMessage }]
+      })
+    });
+
+    clearInterval(loadingInterval);
+    if (!res.ok) throw new Error('API error ' + res.status);
+
+    const data = await res.json();
+    const rawText = data.content[0].text;
+    const jsonStr = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const parsed = JSON.parse(jsonStr);
+
+    allNiches = parsed;
+    renderPreviews(parsed);
+    show('screen-results');
+
+  } catch (err) {
+    clearInterval(loadingInterval);
+    console.error(err);
+    show('screen-questions');
+    document.getElementById('q-error').textContent = 'Erro ao conectar com a IA: ' + err.message;
+    document.getElementById('q-error').style.display = 'block';
+  }
+}
+
+// ══════════════════════════════════════════════
+// RENDER NICHE PREVIEWS
+// ══════════════════════════════════════════════
+function renderPreviews(data) {
+  const container = document.getElementById('niche-preview-cards');
+  container.innerHTML = '';
+
+  data.nichos.forEach((n, i) => {
+    const card = document.createElement('div');
+    card.className = 'niche-preview-card' + (i === 0 ? ' top-pick' : '');
+
+    card.innerHTML = `
+      <div class="npc-header">
+        <div class="npc-num">${i + 1}</div>
+        <div class="npc-title-wrap">
+          <div class="npc-title">${n.nome}</div>
+          <div class="npc-tagline">"${n.tagline}"</div>
+        </div>
+        ${i === 0 ? '<span class="top-pick-tag">Maior fit</span>' : ''}
+      </div>
+      <p style="font-size:14px; color:var(--muted); line-height:1.7;">${n.descricao}</p>
+      <div class="npc-angle">
+        <strong>Seu ângulo único</strong>
+        ${n.lacuna_identificada}
+      </div>
+      <div class="npc-chips">
+        <div class="npc-chip">Público: <span>${n.publico_alvo.substring(0, 50)}${n.publico_alvo.length > 50 ? '…' : ''}</span></div>
+        <div class="npc-chip">Ticket: <span>${n.ticket_potencial}</span></div>
+        <div class="npc-chip">Resultado: <span>${n.prazo_resultado}</span></div>
+      </div>
+      <button class="btn-choose" onclick="selectNiche(${i})">
+        Quero explorar este nicho → Gerar estudo completo
+      </button>
+    `;
+
+    container.appendChild(card);
+  });
+
+  // Next steps
+  if (data.proximo_passo && data.proximo_passo.length) {
+    const ns = document.getElementById('next-steps-block');
+    const nsList = document.getElementById('next-steps-list');
+    nsList.innerHTML = '';
+    data.proximo_passo.forEach((step, i) => {
+      nsList.innerHTML += `
+        <div class="next-step">
+          <div class="ns-num">${i + 1}</div>
+          <span>${step}</span>
+        </div>`;
+    });
+    ns.style.display = 'block';
+  }
+}
+
+// ══════════════════════════════════════════════
+// SELECT NICHE → CONFIRM SCREEN
+// ══════════════════════════════════════════════
+function selectNiche(idx) {
+  selectedNiche = allNiches.nichos[idx];
+  document.getElementById('confirm-niche-name').textContent = selectedNiche.nome;
+  document.getElementById('confirm-niche-tagline').textContent = '"' + selectedNiche.tagline + '"';
+  document.getElementById('confirm-error').style.display = 'none';
+  show('screen-confirm');
+  window.scrollTo(0, 0);
+}
+
+// ══════════════════════════════════════════════
+// STEP 2 — GENERATE DEEP STUDY
+// ══════════════════════════════════════════════
+async function generateDeepStudy() {
+  if (!selectedNiche) return;
+
+  show('screen-loading2');
+  const loadingInterval = animateLoadingSteps(['ls21','ls22','ls23','ls24','ls25']);
+
+  const systemPrompt = `Você é um analista estratégico sênior da Taut, especializado em estudos de viabilidade de nicho jurídico. Sua tarefa é produzir um estudo completo, aprofundado e estratégico sobre o nicho selecionado pelo advogado.
+
+O estudo deve ser denso, específico e acionável — não genérico. Use dados concretos, estimativas fundamentadas, e conecte sempre ao perfil real do advogado. Pense em termos de um consultor sênior que passou horas pesquisando aquele mercado.
+
+━━━ FORMATO ━━━
+
+Responda EXCLUSIVAMENTE em JSON válido:
+
+{
+  "titulo": "Estudo de Viabilidade: [nome completo do nicho]",
+  "data": "Março de 2026",
+  "introducao": {
+    "descricao": "3 parágrafos introduzindo o nicho, seu contexto e por que ele é estratégico no mercado jurídico atual.",
+    "porque_estrategico": "1 parágrafo específico sobre por que esse nicho é especialmente relevante agora — mudanças regulatórias, tendências de mercado, demanda reprimida."
+  },
+  "viabilidade": {
+    "visao_geral": "2 parágrafos sobre a viabilidade geral do nicho.",
+    "tam_estimativa": "Estimativa detalhada do mercado endereçável no Brasil com lógica de cálculo.",
+    "tendencias": [
+      {"titulo": "Nome da tendência", "descricao": "Explicação da tendência e impacto no nicho"}
+    ],
+    "dores_principais": [
+      {"dor": "Nome da dor", "detalhe": "Explicação do problema e por que gera demanda jurídica"}
+    ]
+  },
+  "publico_alvo": [
+    {
+      "segmento": "Nome do segmento",
+      "descricao": "Quem são, o que fazem, em que fase estão",
+      "dores_especificas": ["dor 1", "dor 2", "dor 3"],
+      "momento_compra": "Quando e por que buscam esse advogado especificamente",
+      "capacidade_financeira": "Alta / Média / Baixa"
+    }
+  ],
+  "produtos": [
+    {
+      "nome": "Nome do serviço/produto jurídico",
+      "descricao": "O que inclui, como funciona, qual problema resolve",
+      "formato": "Assessoria contínua / Por projeto / Consultoria / Contencioso / Outro",
+      "ticket_estimado": "R$ X.000 – R$ Y.000"
+    }
+  ],
+  "canais": [
+    {
+      "canal": "Nome do canal",
+      "acoes": "O que fazer especificamente nesse canal para atrair esse perfil de cliente",
+      "potencial_autoridade": "Alto / Médio / Baixo",
+      "adequacao_high_ticket": "Alta / Média / Baixa"
+    }
+  ],
+  "conclusao": {
+    "parecer_geral": "2 parágrafos com a conclusão estratégica — viabilidade, janela de oportunidade, perspectivas.",
+    "recomendacoes": [
+      "Recomendação 1 — específica e acionável",
+      "Recomendação 2",
+      "Recomendação 3",
+      "Recomendação 4"
+    ]
+  },
+  "referencias": [
+    {"numero": 1, "texto": "AUTOR/ÓRGÃO. Título. Disponível em: URL. Acesso em: 2026.", "url": "https://..."}
+  ]
+}
+
+Use 3-4 segmentos de público-alvo, 4-5 produtos, 5-6 canais e 5-8 referências reais e verificáveis.`;
+
+  const userMessage = `Gere o estudo completo de viabilidade.
+
+━━━ NICHO SELECIONADO ━━━
+Nome: ${selectedNiche.nome}
+Tagline: ${selectedNiche.tagline}
+Descrição: ${selectedNiche.descricao}
+Ângulo único: ${selectedNiche.lacuna_identificada}
+Público: ${selectedNiche.publico_alvo}
+
+━━━ PERFIL DO ADVOGADO ━━━
+Trajetória: ${answers.trajetoria}
+Melhores clientes: ${answers.melhores_clientes}
+Melhor caso: ${answers.melhor_caso}
+O que não quer: ${answers.nao_quer}
+Melhor em uma coisa: ${answers.melhor_em_uma_coisa}
+Opinião forte: ${answers.opiniao_forte}
+Resultado desejado: ${answers.resultado_desejado}
+Faturamento: ${answers.revenue}
+Abrangência: ${answers.scope}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5-20251101',
+        max_tokens: 8000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMessage }]
+      })
+    });
+
+    clearInterval(loadingInterval);
+    if (!res.ok) throw new Error('API error ' + res.status);
+
+    const data = await res.json();
+    const rawText = data.content[0].text;
+    const jsonStr = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const parsed = JSON.parse(jsonStr);
+
+    renderStudy(parsed);
+    show('screen-study');
+    window.scrollTo(0, 0);
+
+  } catch (err) {
+    clearInterval(loadingInterval);
+    console.error(err);
+    show('screen-confirm');
+    document.getElementById('confirm-error').textContent = 'Erro ao gerar o estudo: ' + err.message;
+    document.getElementById('confirm-error').style.display = 'block';
+  }
+}
+
+// ══════════════════════════════════════════════
+// RENDER STUDY DOCUMENT
+// ══════════════════════════════════════════════
+function renderStudy(s) {
+  const doc = document.getElementById('study-doc');
+
+  // build potential colors
+  const potClass = (v) => {
+    if (!v) return '';
+    const lower = v.toLowerCase();
+    if (lower === 'alto' || lower === 'alta') return 'pot-alto';
+    if (lower === 'médio' || lower === 'média') return 'pot-medio';
+    return 'pot-baixo';
+  };
+
+  // Produtos HTML
+  let prodHTML = '';
+  (s.produtos || []).forEach(p => {
+    prodHTML += `
+    <div class="study-product-card">
+      <h4>${p.nome}</h4>
+      <p>${p.descricao}</p>
+      <p style="color:#888; font-size:12px; margin-bottom:6px;">${p.formato}</p>
+      <span class="study-product-ticket">${p.ticket_estimado}</span>
+    </div>`;
+  });
+
+  // Canais table
+  let canaisRows = '';
+  (s.canais || []).forEach(c => {
+    canaisRows += `
+    <tr>
+      <td><strong>${c.canal}</strong></td>
+      <td>${c.acoes}</td>
+      <td class="${potClass(c.potencial_autoridade)}">${c.potencial_autoridade}</td>
+      <td class="${potClass(c.adequacao_high_ticket)}">${c.adequacao_high_ticket}</td>
+    </tr>`;
+  });
+
+  // Público segmentos
+  let publicoHTML = '';
+  (s.publico_alvo || []).forEach(p => {
+    const doresHTML = (p.dores_especificas || []).map(d => `<li>${d}</li>`).join('');
+    publicoHTML += `
+    <div class="study-segment-card">
+      <h4>${p.segmento}</h4>
+      <p>${p.descricao}</p>
+      <ul class="study-bullets">${doresHTML}</ul>
+      <p style="margin-bottom:6px;"><strong>Momento de compra:</strong> ${p.momento_compra}</p>
+      <span class="study-segment-chip">Cap. Financeira: ${p.capacidade_financeira}</span>
+    </div>`;
+  });
+
+  // Tendências
+  let tendHTML = '';
+  (s.viabilidade?.tendencias || []).forEach(t => {
+    tendHTML += `<li><strong>${t.titulo}:</strong> ${t.descricao}</li>`;
+  });
+
+  // Dores
+  let doresHTML = '';
+  (s.viabilidade?.dores_principais || []).forEach(d => {
+    doresHTML += `<li><strong>${d.dor}:</strong> ${d.detalhe}</li>`;
+  });
+
+  // Recomendações
+  let recsHTML = '';
+  (s.conclusao?.recomendacoes || []).forEach((r, i) => {
+    recsHTML += `
+    <div class="study-rec">
+      <div class="rec-num">${i + 1}</div>
+      <p>${r}</p>
+    </div>`;
+  });
+
+  // Referências
+  let refsHTML = '';
+  (s.referencias || []).forEach(r => {
+    const linkText = r.url ? `<a href="${r.url}" target="_blank">${r.url}</a>` : '';
+    refsHTML += `<li>${r.numero}. ${r.texto} ${linkText}</li>`;
+  });
+
+  doc.innerHTML = `
+    <div class="study-cover">
+      <div class="cover-logo">
+        <div class="cover-logo-mark">T</div>
+        <div class="cover-logo-name">Taut</div>
+      </div>
+      <div class="cover-eyebrow">Estudo de Viabilidade</div>
+      <h1>${s.titulo}</h1>
+      <div class="cover-meta">${s.data} · Gerado por IA com base no perfil do advogado</div>
+      <hr class="cover-divider" />
+      <div class="cover-disclaimer">Este estudo foi gerado pela IA da Taut com base nas respostas fornecidas pelo advogado e em dados públicos de mercado. Destina-se ao uso estratégico e orientativo — não substitui consultoria jurídica ou análise de mercado aprofundada.</div>
+    </div>
+
+    <div class="study-body">
+
+      <div class="study-section">
+        <div class="study-section-num">Seção 1</div>
+        <h2>Introdução</h2>
+        <p>${s.introducao?.descricao?.replace(/\n/g, '</p><p>') || ''}</p>
+        ${s.introducao?.porque_estrategico ? `
+        <div class="study-subsection" style="margin-top:16px;">
+          <h3>Por que esse nicho agora</h3>
+          <p>${s.introducao.porque_estrategico}</p>
+        </div>` : ''}
+      </div>
+
+      <div class="study-section">
+        <div class="study-section-num">Seção 2</div>
+        <h2>Viabilidade do Nicho</h2>
+        <p>${s.viabilidade?.visao_geral?.replace(/\n/g, '</p><p>') || ''}</p>
+        <div class="study-subsection" style="margin-top:16px;">
+          <h3>Tamanho de Mercado (TAM)</h3>
+          <p>${s.viabilidade?.tam_estimativa || ''}</p>
+        </div>
+        ${tendHTML ? `
+        <div class="study-subsection" style="margin-top:16px;">
+          <h3>Tendências Relevantes</h3>
+          <ul class="study-bullets">${tendHTML}</ul>
+        </div>` : ''}
+        ${doresHTML ? `
+        <div class="study-subsection" style="margin-top:16px;">
+          <h3>Principais Dores do Mercado</h3>
+          <ul class="study-bullets">${doresHTML}</ul>
+        </div>` : ''}
+      </div>
+
+      <div class="study-section">
+        <div class="study-section-num">Seção 3</div>
+        <h2>Público-Alvo Ideal</h2>
+        ${publicoHTML}
+      </div>
+
+      <div class="study-section">
+        <div class="study-section-num">Seção 4</div>
+        <h2>Produtos Jurídicos Estratégicos</h2>
+        ${prodHTML}
+      </div>
+
+      <div class="study-section">
+        <div class="study-section-num">Seção 5</div>
+        <h2>Canais de Aquisição e Parcerias</h2>
+        <table class="study-table">
+          <thead>
+            <tr>
+              <th>Canal</th>
+              <th>Ações Recomendadas</th>
+              <th>Potencial de Autoridade</th>
+              <th>Adequação High Ticket</th>
+            </tr>
+          </thead>
+          <tbody>${canaisRows}</tbody>
+        </table>
+      </div>
+
+      <div class="study-section">
+        <div class="study-section-num">Seção 6</div>
+        <h2>Conclusão e Recomendações</h2>
+        <p>${s.conclusao?.parecer_geral?.replace(/\n/g, '</p><p>') || ''}</p>
+        ${recsHTML ? `
+        <div class="study-recs" style="margin-top:16px;">
+          ${recsHTML}
+        </div>` : ''}
+      </div>
+
+      ${refsHTML ? `
+      <div class="study-refs">
+        <h2>Referências</h2>
+        <ul>${refsHTML}</ul>
+      </div>` : ''}
+
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════
+// PDF DOWNLOAD
+// ══════════════════════════════════════════════
+function downloadPDF() {
+  const instructions = document.createElement('div');
+  instructions.id = 'print-instructions';
+  instructions.style.cssText = `
+    position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+    background: #131110; color: #F4F1EB;
+    border: 1px solid #B85C35; border-radius: 12px;
+    padding: 16px 20px; font-family: Inter, sans-serif;
+    font-size: 13px; line-height: 1.6; max-width: 280px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  `;
+  instructions.innerHTML = `
+    <div style="font-weight:700; color:#B85C35; margin-bottom:8px;">💡 Salvar como PDF</div>
+    No diálogo de impressão que vai abrir:<br>
+    <strong>Destino → Salvar como PDF</strong><br>
+    Recomendado: Papel A4, margens mínimas.
+    <div style="margin-top:10px;">
+      <button onclick="document.getElementById('print-instructions').remove()" style="background:transparent; border:1px solid #555; color:#888; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">Fechar</button>
+    </div>
+  `;
+  document.body.appendChild(instructions);
+
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      const el = document.getElementById('print-instructions');
+      if (el) el.remove();
+    }, 3000);
+  }, 400);
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+show('screen-apikey');
+</script>
+</body>
+</html>
